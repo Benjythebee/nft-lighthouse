@@ -4,7 +4,7 @@ import env from "../env";
 import * as crypto from "crypto";
 import { providers } from "ethers";
 const settings:AlchemySettings = {
-    apiKey: env.AlCHEMY_KEY,
+    apiKey: env.ALCHEMY_KEY,
     authToken: env.ALCHEMY_AUTH_TOKEN,
     network: Network.ETH_MAINNET, // Replace with your network.
 };
@@ -13,7 +13,7 @@ const settings:AlchemySettings = {
 const alchemy = new Alchemy(settings);
 export default alchemy
 
-export const provider = new providers.AlchemyProvider('homestead', env.AlCHEMY_KEY)
+export const provider = new providers.AlchemyProvider('homestead', env.ALCHEMY_KEY)
 
 
 export function isValidSignatureForStringBody(
