@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "bun --watch run src/index.ts",
+    "server": "bun run dist/index.js",
     "build": "bun build ./src/index.ts --outdir ./build --target bun",
     "db:pull": "bunx prisma db pull --schema=./src/libs/prisma/schema.prisma"
   },
