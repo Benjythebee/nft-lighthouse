@@ -44,7 +44,7 @@ export const upsertOwnersOfNFTs = async (chain:Network,ownersData:OwnersData[]) 
             return false
         }
     }
-    console.log('Upserted for '+ Object.keys(byAddresses).join(', '))
+    console.log(`[${chain}] Upserted for `+ Object.keys(byAddresses).join(', '))
         
   
     return true

@@ -72,7 +72,7 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
       if(!logs || logs.length === 0){
         return res.status(200).send('ok');
       }
-      console.log('contract: '+ Object.entries(contractAddresses[chain]).find((t)=>t[1].toLowerCase() == address.toLowerCase())?.[0],', address:'+address)
+      console.log(`[${chain}] contract: `+ Object.entries(contractAddresses[chain]).find((t)=>t[1].toLowerCase() == address.toLowerCase())?.[0],', address:'+address)
 
       const contract = new Contract(contractAddress,ABI,provider)
 
@@ -99,7 +99,7 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
           const decoded = contract.interface.parseLog(object)
           console.log(decoded)
           const functionName = contract.interface.getFunction(innerLog.topics[0])
-          console.log('functionName:',functionName)
+          console.log(`[${chain}] functionName: `+functionName)
         }
       }
 
@@ -114,7 +114,6 @@ app.use(bodyParser)
 app.get('/', (req, res) => {
   res.status(200).send('ok');
 });
-
 
 
 app.listen(env.SERVER_PORT,()=>{

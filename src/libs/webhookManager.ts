@@ -91,7 +91,7 @@ export default class WebHookManager{
             WebhookType.GRAPHQL,{
                 skip_empty_messages:true,
                 graphqlQuery:graphQLQueries.transferQuery(address),
-                network:Network.ETH_MAINNET
+                network:this.network
             }
           );
           this.webhooks.push(nftCustomWebhook)
