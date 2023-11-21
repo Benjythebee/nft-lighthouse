@@ -8,7 +8,8 @@ COPY . .
 # Install dependencies
 RUN bun install
 
-RUN bun prisma:setup && bun build
+RUN bunx prisma db pull --schema=./src/libs/prisma/schema.prisma
+RUN bunx prisma generate --schema=./src/libs/prisma/schema.prisma
 
 EXPOSE 8080
 CMD ["bun", "server"]
