@@ -9,7 +9,7 @@ export default class WebHookManager{
     _isReady:boolean=false
     _host:string = env.SERVER_HOST
     
-    constructor(public alchemy:Alchemy,private addressesToListenTo:string[] = []){
+    constructor(public alchemy:Alchemy,private addressesToListenTo:string[] = [],public network:Network=Network.ETH_MAINNET){
         this._init()
     }
 
@@ -122,7 +122,8 @@ export default class WebHookManager{
     }
 }
 
-export const webHookManager = new WebHookManager(alchemy,Object.values(contractAddresses))
+export const webHookManagerEth = new WebHookManager(alchemy.alchemyEth,Object.values(contractAddresses.eth),Network.ETH_MAINNET)
+export const webHookManagerGoerli = new WebHookManager(alchemy.alchemyGoerli,Object.values(contractAddresses.goerli),Network.ETH_GOERLI)
 
 const graphQLQueries = {
     transferQuery:(address:string)=>`{
