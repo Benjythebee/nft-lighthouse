@@ -10,6 +10,7 @@ import {webHookManager} from './libs/webhookManager'
 import { Contract } from "ethers";
 import { ABIS } from "@cyberbrokers/eth-utils";
 import { objectEnumNames } from "@prisma/client/runtime/library";
+import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
 /**
  * Webhooks; It's important to create them BEFORE we use the json() middleware
  */
@@ -68,8 +69,6 @@ for(const contractAddress of Object.values(contractAddresses)){
 
       }
       for (const innerLog of log.transaction.logs){
-        // const functionName = contract.interface.getFunction(innerLog.topics[0])
-        // console.log('functionName:',functionName)
         console.log(innerLog)
         let object = {
           data:innerLog.data||'',
@@ -77,12 +76,10 @@ for(const contractAddress of Object.values(contractAddresses)){
         }
         const decoded = contract.interface.parseLog(object)
         console.log(decoded)
-        
+        const functionName = contract.interface.getFunction(innerLog.topics[0])
+        console.log('functionName:',functionName)
       }
     }
-
-
-
 
     res.status(200).send('ok');
   });
@@ -100,3 +97,9 @@ app.get('/', (req, res) => {
 app.listen(env.SERVER_PORT,()=>{
   console.log('Server listening on port '+ env.SERVER_PORT)
 })
+
+
+setTimeout(async ()=>{
+  // Run job to sync ownership on startup
+  await setCurrentOwnership()
+},2000)

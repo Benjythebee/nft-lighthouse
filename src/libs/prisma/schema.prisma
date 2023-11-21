@@ -146,14 +146,15 @@ model character_transit {
 }
 
 model contract {
-  contract_id BigInt      @id @default(autoincrement())
-  blockchain  blockchain
-  address     Bytes
-  key         String
-  asset       asset[]
-  character   character[]
-  mech        mech[]
-  payment     payment[]
+  contract_id     BigInt            @id @default(autoincrement())
+  blockchain      blockchain
+  address         Bytes
+  key             String
+  asset           asset[]
+  character       character[]
+  mech            mech[]
+  payment         payment[]
+  token_ownership token_ownership[]
 
   @@unique([blockchain, address])
 }
@@ -291,6 +292,21 @@ model payment {
   error           String?
   account         account          @relation(fields: [account_uuid], references: [account_uuid], onDelete: NoAction, onUpdate: NoAction)
   contract        contract?        @relation(fields: [contract_id], references: [contract_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model token_ownership {
+  token_ownership_id BigInt   @id @default(autoincrement())
+  contract_id        BigInt
+  token_id           BigInt
+  owner              Bytes
+  count              BigInt   @default(1)
+  updated_at         DateTime @default(now()) @db.Timestamptz(6)
+  contract           contract @relation(fields: [contract_id], references: [contract_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([contract_id, token_id, owner])
+  @@index([contract_id, owner])
+  @@index([contract_id, token_id])
+  @@index([owner])
 }
 
 enum blockchain {

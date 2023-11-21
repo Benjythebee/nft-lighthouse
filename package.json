@@ -9,7 +9,7 @@
   "scripts": {
     "start": "bun --watch run src/index.ts",
     "server": "bun run build/index.js",
-    "prisma:setup":"bunx prisma db pull --schema=./src/libs/prisma/schema.prisma && bunx prisma generate --schema=./src/libs/prisma/schema.prisma",
+    "prisma:setup": "bunx prisma db pull --schema=./src/libs/prisma/schema.prisma && bunx prisma generate --schema=./src/libs/prisma/schema.prisma",
     "build": "bun build ./src/index.ts --outdir ./build --target bun",
     "db:pull": "bunx prisma db pull --schema=./src/libs/prisma/schema.prisma"
   },
