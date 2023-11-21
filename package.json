@@ -7,9 +7,9 @@
     "bun": ">=0.0.1"
   },
   "scripts": {
-    "prepare":"husky install",
     "start": "bun --watch run src/index.ts",
     "server": "bun run dist/index.js",
+    "prisma:setup":"bunx prisma pull --schema=./src/libs/prisma/schema.prisma && bunx prisma generate --schema=./src/libs/prisma/schema.prisma",
     "build": "bun build ./src/index.ts --outdir ./build --target bun",
     "db:pull": "bunx prisma db pull --schema=./src/libs/prisma/schema.prisma"
   },
@@ -31,7 +31,6 @@
     "dotenv": "^16.3.1",
     "envsafe": "^2.0.3",
     "ethers": "^5",
-    "husky": "^8.0.3",
     "localtunnel": "^2.0.2",
     "winston": "^3.11.0"
   }
