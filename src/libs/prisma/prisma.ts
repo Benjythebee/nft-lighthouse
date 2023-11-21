@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { createLogger } from "../logger";
 const log = createLogger('staging-auth', 'prisma')
 

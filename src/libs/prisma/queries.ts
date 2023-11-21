@@ -1,6 +1,4 @@
-import bytea from "../../helpers/bytea"
 import prisma from "./prisma"
-import {Prisma} from '@prisma/client'
 
 export type OwnersData={
     address:string, owner:string, tokenId:number, count?:number
