@@ -74,7 +74,6 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
       console.log('contract: '+ Object.entries(contractAddresses[chain]).find((t)=>t[1].toLowerCase() == address.toLowerCase())?.[0],', address:'+address)
 
       const contract = new Contract(contractAddress,ABI,provider)
-      console.log('contract:',contract.address)
 
       for (const log of logs){
         const fromAddress = log.transaction.from.address

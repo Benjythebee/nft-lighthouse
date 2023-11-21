@@ -86,7 +86,7 @@ export default class WebHookManager{
     async createWebhook(address:string){
       console.log(`Creating webhook for ${address}`)
         const nftCustomWebhook = await this.alchemy.notify.createWebhook(
-            `${this.baseUrl}/hook/${address.toLowerCase()}`,
+            `${this.baseUrl}/hook/${this.network==Network.ETH_GOERLI?'goerli/':'eth/'}${address.toLowerCase()}`,
             //@ts-ignore
             WebhookType.GRAPHQL,{
                 skip_empty_messages:true,
