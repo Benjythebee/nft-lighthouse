@@ -8,9 +8,8 @@ COPY . .
 RUN rm -rf bun.lockb && bun install
 
 # https://www.prisma.io/docs/concepts/components/prisma-client#2-installation
-RUN bun add --dev prisma && bun x prisma db pull --schema=./src/libs/prisma/schema.prisma
-RUN ls node_modules/.prisma/client
-RUN bun x prisma generate --schema=./src/libs/prisma/schema.prisma; exit 0
+RUN bun add --dev prisma && bun x prisma db pull
+RUN bun x prisma generate; exit 0
 RUN bun run build
 
 EXPOSE 8080
