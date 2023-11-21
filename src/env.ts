@@ -15,7 +15,7 @@ export const env = envsafe({
     desc: 'The database connection string postgres',
   }),
   ALCHEMY_APP_ID: str({
-    devDefault: 'u0oxheectv2ody6j',
+    devDefault: '',
     default: '',
     allowEmpty: false,
     desc: 'The alchemy app id',
@@ -24,10 +24,10 @@ export const env = envsafe({
     devDefault: '',
     default: '',
     allowEmpty: false,
-    desc: 'The alchemy api key',
+    desc: 'The alchemy notify auth key',
   }),
   AlCHEMY_KEY:str({
-    devDefault: 'n3BrZcfmTJGXvG9QNGUFO5K-UDUE6z0l',
+    devDefault: '',
     default: '',
     allowEmpty: false,
     desc: 'The alchemy api key',
