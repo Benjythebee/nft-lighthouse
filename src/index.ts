@@ -9,7 +9,6 @@ import { alchemyNotifyResponse } from "./types/alchemy";
 import {webHookManager} from './libs/webhookManager'
 import { Contract } from "ethers";
 import { ABIS } from "@cyberbrokers/eth-utils";
-import { objectEnumNames } from "@prisma/client/runtime/library";
 import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
 /**
  * Webhooks; It's important to create them BEFORE we use the json() middleware

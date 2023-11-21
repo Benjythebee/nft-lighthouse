@@ -1,6 +1,6 @@
 import { getCbContractsByChainId, parseTokenId } from "@cyberbrokers/eth-utils"
 import getOwnershipOfAllNFTs from "../helpers/currentOwnership"
-import { OwnersData, upsertOwnersOfNFTs } from "../libs/prisma/queries"
+import { OwnersData, upsertOwnersOfNFTs } from "../libs/pg/queries"
 import { ownerWithBalanceWithContract } from "../types/alchemy-api"
 
 

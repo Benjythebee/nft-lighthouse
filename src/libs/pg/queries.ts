@@ -1,4 +1,4 @@
-import prisma from "./prisma"
+import {pg} from "./pg"
 
 export type OwnersData={
     address:string, owner:string, tokenId:number, count?:number
@@ -18,7 +18,7 @@ export const upsertOwnersOfNFTs = async (ownersData:OwnersData[]) => {
 
     for(const [address,values] of Object.entries(byAddresses)){
         try{
-            await prisma.$executeRawUnsafe(`WITH contract_ids AS (
+            await pg.query(`WITH contract_ids AS (
                 SELECT c.contract_id
                 FROM contract c
                 WHERE c.blockchain = 'eth-mainnet' AND c.address = decode('${address.substring(2)}','hex')
@@ -38,12 +38,12 @@ export const upsertOwnersOfNFTs = async (ownersData:OwnersData[]) => {
             DO UPDATE SET
                 count = EXCLUDED.count,
                 updated_at = NOW();`)
-            console.log('upserted')
         }catch(e:any){
             console.error(e)
             return false
         }
     }
+    console.log('Upserted for '+ Object.keys(byAddresses).join(', '))
         
   
     return true

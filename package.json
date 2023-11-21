@@ -9,14 +9,12 @@
   "scripts": {
     "start": "bun --watch run src/index.ts",
     "server": "bun run build/index.js",
-    "prisma:setup": "bunx prisma db pull && bunx prisma generate",
-    "build": "bun build ./src/index.ts --outdir ./build --target bun",
-    "db:pull": "bunx prisma db pull"
+    "build": "bun build ./src/index.ts --outdir ./build --target bun"
   },
   "devDependencies": {
+    "@types/pg": "^8.10.9",
     "bun-types": "latest"
   },
-  "trustedDependencies":["@prisma/client"],
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
@@ -24,7 +22,6 @@
     "@cyberbrokers/eth-utils": "^0.0.10",
     "@logtail/node": "^0.4.17",
     "@logtail/winston": "^0.4.17",
-    "@prisma/client": "^5.6.0",
     "@types/localtunnel": "^2.0.4",
     "alchemy-sdk": "latest",
     "body-parser": "^1.20.2",
@@ -33,6 +30,7 @@
     "envsafe": "^2.0.3",
     "ethers": "^5",
     "localtunnel": "^2.0.2",
+    "pg": "^8.11.3",
     "winston": "^3.11.0"
   }
 }
