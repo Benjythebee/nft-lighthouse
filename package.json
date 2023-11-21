@@ -7,6 +7,7 @@
     "bun": ">=0.0.1"
   },
   "scripts": {
+    "prepare":"husky install",
     "start": "bun --watch run src/index.ts",
     "server": "bun run dist/index.js",
     "build": "bun build ./src/index.ts --outdir ./build --target bun",
@@ -30,6 +31,7 @@
     "dotenv": "^16.3.1",
     "envsafe": "^2.0.3",
     "ethers": "^5",
+    "husky": "^8.0.3",
     "localtunnel": "^2.0.2",
     "winston": "^3.11.0"
   }
