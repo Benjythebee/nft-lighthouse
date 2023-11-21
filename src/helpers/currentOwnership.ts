@@ -8,8 +8,8 @@ import { Network } from 'alchemy-sdk'
 export const mechInterface = new utils.Interface(ABIS.mechAbi)
 export const mechCraftInterface = new utils.Interface(ABIS.mechAssemblerAbi)
 
-export const getOwnersAndBalancesOfNFT = async (address:string) => {
-    let url = `https://eth-mainnet.g.alchemy.com/nft/v2/${env.ALCHEMY_KEY}/getOwnersForCollection`
+export const getOwnersAndBalancesOfNFT = async (chain:Network,address:string) => {
+    let url = `https://${chain}.g.alchemy.com/nft/v2/${env.ALCHEMY_KEY}/getOwnersForCollection`
   
     url += `?contractAddress=${address}&withTokenBalances=true`
 
@@ -46,13 +46,13 @@ export default async function getOwnershipOfAllNFTs(chain:Network=Network.ETH_MA
     let revealedAddress = getCbContractsByChainId(chainId).revealedAddress
     let unrevealed = getCbContractsByChainId(chainId).unrevealedAddress
     let [mechOwners,cyberBrokersOwners,afterglowOwners] = await Promise.all([
-        getOwnersAndBalancesOfNFT(mechAddress),
-        getOwnersAndBalancesOfNFT(cyberBrokersAddress),
-        getOwnersAndBalancesOfNFT(afterGlowAddress),
+        getOwnersAndBalancesOfNFT(chain,mechAddress),
+        getOwnersAndBalancesOfNFT(chain,cyberBrokersAddress),
+        getOwnersAndBalancesOfNFT(chain,afterGlowAddress),
      ]) 
      let [revealedOwners,unrevealedOwners] = await Promise.all([
-        getOwnersAndBalancesOfNFT(revealedAddress),
-        getOwnersAndBalancesOfNFT(unrevealed),
+        getOwnersAndBalancesOfNFT(chain,revealedAddress),
+        getOwnersAndBalancesOfNFT(chain,unrevealed),
      ]) 
     return {mechOwners,cyberBrokersOwners,afterglowOwners,revealedOwners,unrevealedOwners}
 }
