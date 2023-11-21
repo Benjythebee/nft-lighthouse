@@ -26,7 +26,7 @@ export const env = envsafe({
     allowEmpty: false,
     desc: 'The alchemy notify auth key',
   }),
-  AlCHEMY_KEY:str({
+  ALCHEMY_KEY:str({
     devDefault: '',
     default: '',
     allowEmpty: false,
@@ -49,6 +49,7 @@ export const env = envsafe({
   }),
   LOGTAIL_KEY: str({
     devDefault: '',
+    default: '',
     allowEmpty: true,
     desc: 'The logtail key to use for logging',
   }),
