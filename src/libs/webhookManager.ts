@@ -70,12 +70,18 @@ export default class WebHookManager{
         const nftCustomWebhooks = await this.alchemy.notify.getAllWebhooks().catch((e)=>{console.error(JSON.stringify(e));console.log(e.stack);return {webhooks:[]}})
         console.log(nftCustomWebhooks.webhooks)
         // delete old localtunnel webhooks if any;
-        
-        const localTunnelWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && t.url.includes('loca.lt'))
-        await Promise.all(localTunnelWebhooks.map((t)=>this.deleteWebhook(t as CustomGraphqlWebhook)))
-        
+        if(env.SERVER_HOST=="localhost"){
+          const localTunnelWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && t.url.includes('loca.lt'))
+          await Promise.all(localTunnelWebhooks.map((t)=>this.deleteWebhook(t as CustomGraphqlWebhook)))
+        }
+        // Now filter by hooks that aren't localtunnel
         const leftOverWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && !t.url.includes('loca.lt'))
-        return leftOverWebhooks.filter((t)=>t.type==WebhookType.GRAPHQL && t.url.startsWith(this.baseUrl)) as CustomGraphqlWebhook[]
+
+        // Now filter by hooks that are the correct chain url
+        const leftOverWebhooksWithCorrectChain = leftOverWebhooks.filter((t)=>t.url.includes(this.network==Network.ETH_GOERLI?'goerli/':'eth/'))
+
+        // Only get hooks that are for this server
+        return leftOverWebhooksWithCorrectChain.filter((t)=>t.type==WebhookType.GRAPHQL && t.url.startsWith(this.baseUrl)) as CustomGraphqlWebhook[]
 
     }
 
