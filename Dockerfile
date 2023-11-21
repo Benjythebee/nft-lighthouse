@@ -3,6 +3,7 @@ FROM oven/bun
 # Copy the lock and package file
 COPY bun.lockb . 
 COPY package.json . 
+COPY tsconfig.json . 
 
 # Install dependencies
 RUN bun install --frozen-lockfile
@@ -13,4 +14,5 @@ COPY src ./src
 
 RUN bun prisma:setup && bun build
 
+EXPOSE 8080
 CMD ["bun", "server"]
