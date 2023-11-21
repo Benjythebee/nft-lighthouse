@@ -17,7 +17,7 @@ export const getOwnersAndBalancesOfNFT = async (address:string) => {
     const fetchApi = async ()=>{
 
         let fetchUrl = url + (pageKey?`&pageKey=${pageKey}`:'')
-        console.log(fetchUrl)
+
         try {
             let p = await fetch(fetchUrl, { method: 'GET'})
             let response = (await p.json()) as getOwnerForCollectionResponse
