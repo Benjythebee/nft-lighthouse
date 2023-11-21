@@ -9,7 +9,7 @@ RUN rm -rf bun.lockb && bun install
 
 # https://www.prisma.io/docs/concepts/components/prisma-client#2-installation
 RUN bun install @prisma/client && bunx prisma db pull --schema=./src/libs/prisma/schema.prisma
-RUN bun run build
+RUN bunx prisma generate --schema=./src/libs/prisma/schema.prisma && bun run build
 
 EXPOSE 8080
 CMD ["bun", "server"]
