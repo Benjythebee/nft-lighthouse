@@ -2,6 +2,10 @@
   "name": "nft-monitor",
   "module": "index.ts",
   "type": "module",
+  "engines": {
+    "node": ">=18",
+    "bun": ">=0.0.1"
+  },
   "scripts": {
     "start": "bun --watch run src/index.ts",
     "server": "bun run dist/index.js",
