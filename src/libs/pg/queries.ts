@@ -1,3 +1,4 @@
+import { Network } from "alchemy-sdk"
 import {pg} from "./pg"
 
 export type OwnersData={
@@ -6,7 +7,7 @@ export type OwnersData={
 export type EncodedOwnersData={
     address:Buffer, owner:Buffer, tokenId:number, count?:number
 }
-export const upsertOwnersOfNFTs = async (ownersData:OwnersData[]) => {
+export const upsertOwnersOfNFTs = async (chain:Network,ownersData:OwnersData[]) => {
 
     const byAddresses:Record<string,OwnersData[]> = {}
     for(const ownerData of ownersData){
@@ -21,7 +22,7 @@ export const upsertOwnersOfNFTs = async (ownersData:OwnersData[]) => {
             await pg.query(`WITH contract_ids AS (
                 SELECT c.contract_id
                 FROM contract c
-                WHERE c.blockchain = 'eth-mainnet' AND c.address = decode('${address.substring(2)}','hex')
+                WHERE c.blockchain = '${chain}' AND c.address = decode('${address.substring(2)}','hex')
             ),
             new_values (token_id, owner, count) AS (
                 VALUES

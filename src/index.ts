@@ -10,6 +10,7 @@ import {webHookManagerEth,webHookManagerGoerli} from './libs/webhookManager'
 import { Contract } from "ethers";
 import { ABIS } from "@cyberbrokers/eth-utils";
 import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
+import { Network } from "alchemy-sdk";
 /**
  * Webhooks; It's important to create them BEFORE we use the json() middleware
  */
@@ -123,5 +124,6 @@ app.listen(env.SERVER_PORT,()=>{
 
 setTimeout(async ()=>{
   // Run job to sync ownership on startup
-  await setCurrentOwnership()
+  await setCurrentOwnership(Network.ETH_MAINNET)
+  await setCurrentOwnership(Network.ETH_GOERLI)
 },2000)

@@ -2,10 +2,11 @@ import { getCbContractsByChainId, parseTokenId } from "@cyberbrokers/eth-utils"
 import getOwnershipOfAllNFTs from "../helpers/currentOwnership"
 import { OwnersData, upsertOwnersOfNFTs } from "../libs/pg/queries"
 import { ownerWithBalanceWithContract } from "../types/alchemy-api"
+import { Network } from "alchemy-sdk"
 
 
-export const setCurrentOwnership = async () => {
-    let {mechOwners,cyberBrokersOwners,afterglowOwners,revealedOwners,unrevealedOwners} = await getOwnershipOfAllNFTs()
+export const setCurrentOwnership = async (chain:Network) => {
+    let {mechOwners,cyberBrokersOwners,afterglowOwners,revealedOwners,unrevealedOwners} = await getOwnershipOfAllNFTs(chain)
 
     // We have the owners, now we need to update the database
     const parsedResult = (result:ownerWithBalanceWithContract[])=>{
@@ -21,13 +22,13 @@ export const setCurrentOwnership = async () => {
 
     // let's do it one at a time cause we don't want to overload the db;
     let owners = parsedResult([...mechOwners,...cyberBrokersOwners])
-    await upsertOwnersOfNFTs(owners)
+    await upsertOwnersOfNFTs(chain,owners)
     await sleep(500)
     owners=parsedResult([...afterglowOwners,...revealedOwners])
-    await upsertOwnersOfNFTs(owners)
+    await upsertOwnersOfNFTs(chain,owners)
     await sleep(500)
     owners=parsedResult([...unrevealedOwners])
-    await upsertOwnersOfNFTs(owners)
+    await upsertOwnersOfNFTs(chain,owners)
     
 }
 

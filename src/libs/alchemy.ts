@@ -13,7 +13,6 @@ const settings:{eth:AlchemySettings,goerli:AlchemySettings} = {
     apiKey: env.ALCHEMY_KEY,
     authToken: env.ALCHEMY_AUTH_TOKEN,
     network: Network.ETH_GOERLI, 
-  
   }
 
 };
