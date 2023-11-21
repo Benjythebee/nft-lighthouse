@@ -1,0 +1,31 @@
+{
+  "name": "nft-monitor",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun --watch run src/index.ts",
+    "build": "bun build ./src/index.ts --outdir ./build --target bun",
+    "db:pull": "bunx prisma db pull --schema=./src/libs/prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@cyberbrokers/eth-utils": "^0.0.10",
+    "@logtail/node": "^0.4.17",
+    "@logtail/winston": "^0.4.17",
+    "@prisma/client": "^5.6.0",
+    "@types/localtunnel": "^2.0.4",
+    "alchemy-sdk": "latest",
+    "body-parser": "^1.20.2",
+    "bunrest": "^1.3.7",
+    "dotenv": "^16.3.1",
+    "envsafe": "^2.0.3",
+    "ethers": "^5",
+    "localtunnel": "^2.0.2",
+    "winston": "^3.11.0"
+  }
+}

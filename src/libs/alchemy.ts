@@ -1,0 +1,28 @@
+import { Alchemy, AlchemySettings, Network, WebhookType } from "alchemy-sdk";
+import env from "../env";
+
+import * as crypto from "crypto";
+import { providers } from "ethers";
+const settings:AlchemySettings = {
+    apiKey: env.AlCHEMY_KEY,
+    authToken: env.ALCHEMY_AUTH_TOKEN,
+    network: Network.ETH_MAINNET, // Replace with your network.
+};
+
+
+const alchemy = new Alchemy(settings);
+export default alchemy
+
+export const provider = new providers.AlchemyProvider('homestead', env.AlCHEMY_KEY)
+
+
+export function isValidSignatureForStringBody(
+    body: string, // must be raw string body, not json transformed version of the body
+    signature: string, // your "x-alchemy-signature" from header
+    signingKey: string, // taken from dashboard for specific webhook
+  ): boolean {
+    const hmac = crypto.createHmac("sha256", signingKey); // Create a HMAC SHA256 hash using the signing key
+    // hmac.update(body, "utf8"); // Update the token hash with the request body using utf8
+    const digest = hmac.digest("hex");
+    return signature === digest;
+}
