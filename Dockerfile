@@ -7,7 +7,6 @@ COPY . .
 RUN bun install
 
 RUN bunx prisma db pull --schema=./src/libs/prisma/schema.prisma
-RUN bunx prisma generate --schema=./src/libs/prisma/schema.prisma
 RUN bun add prisma && bun install && bun run build
 
 EXPOSE 8080
