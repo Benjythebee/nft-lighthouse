@@ -9,6 +9,7 @@
   "scripts": {
     "start": "bun --watch run src/index.ts",
     "server": "bun run build/index.js",
+    "clean:localtnl":"bun run src/jobs/cleanLocalTunnelHooks.ts",
     "build": "bun build ./src/index.ts --outdir ./build --target bun"
   },
   "devDependencies": {

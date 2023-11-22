@@ -9,8 +9,10 @@ export default class WebHookManager{
     _isReady:boolean=false
     _host:string = env.SERVER_HOST
     
-    constructor(public alchemy:Alchemy,private addressesToListenTo:string[] = [],public network:Network=Network.ETH_MAINNET){
+    constructor(public alchemy:Alchemy,private addressesToListenTo:string[] = [],public network:Network=Network.ETH_MAINNET,noInit:boolean=false){
+      if(!noInit){
         this._init()
+      }
     }
 
     getKeyFromAddress(address:string){
@@ -120,14 +122,21 @@ export default class WebHookManager{
             await this.alchemy.notify.deleteWebhook(webhook);
             this.webhooks.splice(this.webhooks.indexOf(webhook),1)
         }catch(e:any){
-            console.error(e)
-            this.webhooks.push(webhook)
         }
         return 
     }
 
     async toggleWebhook(webhook:CustomGraphqlWebhook,enable:boolean){
         return await this.alchemy.notify.updateWebhook(webhook.id,{isActive:enable});
+    }
+
+    static cleanAllLocaltunnelWebhooks = async (alchemy:Alchemy) => {
+        const a = new WebHookManager(alchemy,[],Network.ETH_MAINNET,true)
+
+        const nftCustomWebhooks = await a.alchemy.notify.getAllWebhooks().catch((e)=>{console.error(JSON.stringify(e));console.log(e.stack);return {webhooks:[]}})
+        // delete old localtunnel webhooks if any;
+        const localTunnelWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && t.url.includes('loca.lt'))
+        await Promise.all(localTunnelWebhooks.map((t)=>a.deleteWebhook(t as CustomGraphqlWebhook)))
     }
 }
 
