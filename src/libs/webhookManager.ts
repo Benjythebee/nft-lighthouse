@@ -68,14 +68,14 @@ export default class WebHookManager{
     async getAllWebhooks(){
 
         const nftCustomWebhooks = await this.alchemy.notify.getAllWebhooks().catch((e)=>{console.error(JSON.stringify(e));console.log(e.stack);return {webhooks:[]}})
-        console.log(nftCustomWebhooks.webhooks)
+        let leftOverWebhooks = nftCustomWebhooks.webhooks
         // delete old localtunnel webhooks if any;
         if(env.SERVER_HOST=="localhost"){
-          const localTunnelWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && t.url.includes('loca.lt'))
+          const localTunnelWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && t.url.includes('loca.lt') && t.url.includes(this.network==Network.ETH_GOERLI?'goerli/':'eth/'))
           await Promise.all(localTunnelWebhooks.map((t)=>this.deleteWebhook(t as CustomGraphqlWebhook)))
+          // Now filter by hooks that aren't localtunnel
+          leftOverWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && !t.url.includes('loca.lt'))
         }
-        // Now filter by hooks that aren't localtunnel
-        const leftOverWebhooks = nftCustomWebhooks.webhooks.filter((t)=>t.type==WebhookType.GRAPHQL && !t.url.includes('loca.lt'))
 
         // Now filter by hooks that are the correct chain url
         const leftOverWebhooksWithCorrectChain = leftOverWebhooks.filter((t)=>t.url.includes(this.network==Network.ETH_GOERLI?'goerli/':'eth/'))
@@ -88,9 +88,12 @@ export default class WebHookManager{
     async disableAllWebhooks(){
         await Promise.all(this.webhooks.map((t)=>this.toggleWebhook(t,false)))
     }
+    async deleteAllWebhooks(){
+        await Promise.all(this.webhooks.map((t)=>this.deleteWebhook(t)))
+    }
 
     async createWebhook(address:string){
-      console.log(`Creating webhook for ${address}`)
+      console.log(`Creating ${this.network} webhook for ${address}`)
         const nftCustomWebhook = await this.alchemy.notify.createWebhook(
             `${this.baseUrl}/hook/${this.network==Network.ETH_GOERLI?'goerli/':'eth/'}${address.toLowerCase()}`,
             //@ts-ignore

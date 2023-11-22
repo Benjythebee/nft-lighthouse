@@ -48,6 +48,8 @@ export function Connect(): ConnectResult {
       rejectUnauthorized: false,
       ca: process.env.CA_CERT,
     }
+  }else if (env.DATABASE_URL?.includes('localhost')|| env.DATABASE_URL?.includes('winhost')) {
+    sslSettings = false
   }
 
   const pool = new Pool({

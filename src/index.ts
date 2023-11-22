@@ -1,8 +1,9 @@
 import server from "bunrest";
 const app = server();
 const bodyParser = require('body-parser')
+const nodeCleanup = require('node-cleanup')
 import env from './env'
-import {constants} from 'ethers'
+import {BigNumber, constants} from 'ethers'
 import { contractAddresses, mintContractAddresses } from "./libs/constants";
 import { isValidSignatureForStringBody, provider } from "./libs/alchemy";
 import { alchemyNotifyResponse } from "./types/alchemy";
@@ -11,9 +12,15 @@ import { Contract } from "ethers";
 import { ABIS } from "@cyberbrokers/eth-utils";
 import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
 import { Network } from "alchemy-sdk";
+import { OwnersData, upsertAndComputeOwnersOfNFTs } from "./libs/pg/queries";
+import { getABIbyAddressAndChainId, getBalanceOfERC1155Contract } from "./helpers/eth";
+import { LogDescription } from "ethers/lib/utils";
 /**
  * Webhooks; It's important to create them BEFORE we use the json() middleware
  */
+
+const currentlyProcessingHash = new Map()
+
 for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
   const chain = _chain as 'eth'|'goerli'
   const addresses =Object.values(contractsByChain)
@@ -38,44 +45,37 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
       // sweet, we have a hook event from alchemy
       const body = req.body as alchemyNotifyResponse;
 
-
-      // get corresponding ABI
-      const isMechContract = address == contractAddresses[chain]["genesis-mechs"].toLowerCase()
-
-      let ABI = ABIS.mechAssemblerAbi as any[];
-      switch (address) {
-        case contractAddresses[chain]["genesis-mechs"].toLowerCase():{
-          ABI = ABIS.mechAbi;
-          break;}
-        case contractAddresses[chain].cyberbrokers.toLowerCase():{
-          ABI = ABIS.cyberbrokersAbi;
-          break;}
-        case contractAddresses[chain].afterglow.toLowerCase():{
-          ABI = ABIS.afterglowAbi;
-          break;}
-        case contractAddresses[chain].accolades.toLowerCase():{
-          ABI = ABIS.accoladeAbi;
-          break;}
-        case contractAddresses[chain]["unrevealed-mech-parts"].toLowerCase():{
-          ABI = ABIS.unrevealedAbi;
-          break;}
-        case contractAddresses[chain]["revealed-mech-parts"].toLowerCase():{
-          ABI = ABIS.revealedAbi;
-          break;}
-        default:
-          break;
-      }
-
-      console.log(body.event.data.block.logs[0])
+      // console.log(body.event.data.block.logs[0])
       const logs = body.event.data.block.logs
 
       if(!logs || logs.length === 0){
         return res.status(200).send('ok');
       }
+      // get hashes
+      const hashes = (logs.map((l)=>l.transaction.hash)).filter((v,i,a)=>a.indexOf(v)===i)
+      // if hash is being processed, ignore;
+      if(hashes.some((hash)=>currentlyProcessingHash.has(hash))){
+        console.log('hash already being processed')
+        return res.status(200).send('ok');
+      }
+      // hashes aren't present, add them to list of hashes;
+      for(const hash of hashes){
+        currentlyProcessingHash.set(hash,true)
+      }
+      // get corresponding ABI
+      const isMechContract = address == contractAddresses[chain]["genesis-mechs"].toLowerCase()
+
       console.log(`[${chain}] contract: `+ Object.entries(contractAddresses[chain]).find((t)=>t[1].toLowerCase() == address.toLowerCase())?.[0],', address:'+address)
 
-      const contract = new Contract(contractAddress,ABI,provider)
-
+      const newOwnerShipDetails:OwnersData[] = []
+      const checkIfPresentInMap = (address:string,tokenId:number,owner:string,count:number) => {
+        let old = newOwnerShipDetails.find((t)=>t.address==address&&t.tokenId==tokenId&&t.owner==owner)
+        if(old){
+          console.warn('Duplicate entry for '+address+' '+tokenId+' '+owner+ '; new count:'+count+`; old count:`+ old.count)
+          return false
+        }
+        return true
+      }
       for (const log of logs){
         const fromAddress = log.transaction.from.address
         const toAddress = log.transaction.to.address
@@ -88,19 +88,80 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
           // do something if minted?
         }else if(burnAddress==toAddress){
           // do something if burned?
-
         }
+
         for (const innerLog of log.transaction.logs){
-          console.log(innerLog)
           let object = {
             data:innerLog.data||'',
             topics:innerLog.topics,
           }
-          const decoded = contract.interface.parseLog(object)
-          console.log(decoded)
-          const functionName = contract.interface.getFunction(innerLog.topics[0])
-          console.log(`[${chain}] functionName: `+functionName)
+          const actualContractAddress = innerLog.account.address
+          const ABI = getABIbyAddressAndChainId(actualContractAddress,chain)
+          const contract = new Contract(actualContractAddress,ABI,provider)
+          let decoded:LogDescription = {} as any
+          try{
+            decoded = contract.interface.parseLog(object)
+          }catch{}
+          if(!decoded){
+            console.warn('Could not decode event'+JSON.stringify(object))
+            continue;
+          }
+          const eventName = decoded.name
+          console.log('EventName: '+eventName)
+
+          const transferEvents = ['Transfer','TransferSingle','TransferBatch']
+          if(!transferEvents.includes(eventName)){
+            continue;
+          }
+
+          if(eventName == 'Transfer'){
+            // ERC721
+            const [from,to,token_id] = decoded.args as [string,string,BigNumber]
+            console.log(`Transfer from ${from} to ${to} tokenId ${token_id.toNumber()}`)
+            if(checkIfPresentInMap(actualContractAddress,token_id.toNumber(),to,1)){
+              newOwnerShipDetails.push({address:actualContractAddress,owner:to,tokenId:token_id.toNumber(),count:1})
+            }
+            if(checkIfPresentInMap(actualContractAddress,token_id.toNumber(),from,1)){
+              newOwnerShipDetails.push({address:actualContractAddress,owner:from,tokenId:token_id.toNumber(),count:0})
+            }
+          }else if (eventName == 'TransferSingle'){
+            // ERC1155
+            const [operator,from,to,token_id,value] = decoded.args as [string,string,string,BigNumber,BigNumber]
+            console.log(`Transfer from ${from} to ${to} tokenId ${token_id.toNumber()}, count: ${value.toNumber()}`)
+            // We could do the math here, but it's safer to just ask the blockchain what the final value is;
+            const toBalance = await getBalanceOfERC1155Contract(contract,to,token_id.toNumber())
+            if(toBalance!='error'&& checkIfPresentInMap(actualContractAddress,token_id.toNumber(),to,toBalance)){
+              newOwnerShipDetails.push({address:actualContractAddress,owner:to,tokenId:token_id.toNumber(),count:toBalance})
+            }
+            const fromBalance = await getBalanceOfERC1155Contract(contract,from,token_id.toNumber())
+            if(fromBalance!='error' && checkIfPresentInMap(actualContractAddress,token_id.toNumber(),from,fromBalance)){
+              newOwnerShipDetails.push({address:actualContractAddress,owner:from,tokenId:token_id.toNumber(),count:fromBalance})
+            }
+
+          }else if (eventName == 'TransferBatch'){
+            // ERC1155 transferBatch
+            const [operator,from,to,token_ids,values] = decoded.args as [string,string,string,BigNumber[],BigNumber[]]
+            for(let i = 0; i<token_ids.length;i++){
+              const id = token_ids[i].toNumber()
+              const fromBalance = await getBalanceOfERC1155Contract(contract,from,id)
+              const toBalance = await getBalanceOfERC1155Contract(contract,to,id)
+              if(fromBalance!='error'){
+                newOwnerShipDetails.push({address:actualContractAddress,owner:from,tokenId:id,count:fromBalance})
+              }
+              if(toBalance!='error'){
+                newOwnerShipDetails.push({address:actualContractAddress,owner:to,tokenId:id,count:toBalance})
+              }
+            }
+          }
+
         }
+      }
+      console.log('Saving to DB now...')
+      // save to DB
+      await upsertAndComputeOwnersOfNFTs(chain=='goerli'?Network.ETH_GOERLI:Network.ETH_MAINNET,newOwnerShipDetails)
+
+      for(const hash of hashes){
+        currentlyProcessingHash.delete(hash)
       }
 
       res.status(200).send('ok');
@@ -126,3 +187,11 @@ setTimeout(async ()=>{
   await setCurrentOwnership(Network.ETH_MAINNET)
   await setCurrentOwnership(Network.ETH_GOERLI)
 },2000)
+
+nodeCleanup(function () {
+  // release resources here before node exits
+  webHookManagerEth.deleteAllWebhooks()
+  webHookManagerGoerli.deleteAllWebhooks()
+},{
+  ctrl_C: "{^C}",
+});
