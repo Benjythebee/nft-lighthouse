@@ -1,7 +1,5 @@
 import server from "bunrest";
 const app = server();
-const bodyParser = require('body-parser')
-const nodeCleanup = require('node-cleanup')
 import env from './env'
 import {BigNumber, constants} from 'ethers'
 import { contractAddresses, mintContractAddresses } from "./libs/constants";
@@ -47,7 +45,6 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
 
       // console.log(body.event.data.block.logs[0])
       const logs = body.event.data.block.logs
-
       if(!logs || logs.length === 0){
         //@ts-ignore
         body.event = null;
@@ -99,7 +96,7 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
           }
           const actualContractAddress = innerLog.account.address
           const ABI = getABIbyAddressAndChainId(actualContractAddress,chain)
-          const contract = new Contract(actualContractAddress,ABI,provider)
+          let contract = new Contract(actualContractAddress,ABI,provider)
           let decoded:LogDescription = {} as any
           try{
             decoded = contract.interface.parseLog(object)
@@ -155,7 +152,7 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
               }
             }
           }
-
+          contract = null!
         }
       }
       console.log('Saving to DB now...')
@@ -171,7 +168,7 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
   }
 }
 
-app.use(bodyParser)
+// app.use(bodyParser)
 
 
 app.get('/', (req, res) => {
@@ -192,4 +189,4 @@ setTimeout(async ()=>{
 
 setInterval(async ()=>{
   console.log('memoryHeap: '+heapStats().heapSize/ 1024 / 1024 + 'mb')
-},5000)
+},10000)

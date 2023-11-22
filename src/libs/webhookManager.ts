@@ -61,6 +61,7 @@ export default class WebHookManager{
         if(this.webhooks.length < this.addressesToListenTo.length){
             await this.resetWebhooks()
         }
+        return this._isReady = true
     }
 
     private get baseUrl(){
