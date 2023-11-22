@@ -1,11 +1,11 @@
 import server from "bunrest";
 const app = server();
 import env from './env'
-import {BigNumber, constants} from 'ethers'
+import { BigNumber, constants } from 'ethers'
 import { contractAddresses, mintContractAddresses } from "./libs/constants";
 import { isValidSignatureForStringBody, provider } from "./libs/alchemy";
 import { alchemyNotifyResponse } from "./types/alchemy";
-import {webHookManagerEth,webHookManagerGoerli} from './libs/webhookManager'
+import { webHookManagerEth, webHookManagerGoerli } from './libs/webhookManager'
 import { Contract } from "ethers";
 import { heapStats } from "bun:jsc";
 import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
@@ -19,23 +19,23 @@ import { LogDescription } from "ethers/lib/utils";
 
 const currentlyProcessingHash = new Map()
 
-for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
-  const chain = _chain as 'eth'|'goerli'
-  const addresses =Object.values(contractsByChain)
-  for(const contractAddress of addresses){
+for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
+  const chain = _chain as 'eth' | 'goerli'
+  const addresses = Object.values(contractsByChain)
+  for (const contractAddress of addresses) {
     // create a route for each contracts;
-    app.post(`/hook/${chain}/`+contractAddress.toLowerCase(), async (req, res) => {
-      const webHookManager= chain=='eth'?webHookManagerEth:webHookManagerGoerli
+    app.post(`/hook/${chain}/` + contractAddress.toLowerCase(), async (req, res) => {
+      const webHookManager = chain == 'eth' ? webHookManagerEth : webHookManagerGoerli
       await webHookManager.isReady()
 
       const address = contractAddress.toLowerCase()
       // verify it's a webhook request from alchemy
-      const xAlchemyHeader = req.headers?req.headers['x-alchemy-signature']:undefined;
-      if(!xAlchemyHeader){
+      const xAlchemyHeader = req.headers ? req.headers['x-alchemy-signature'] : undefined;
+      if (!xAlchemyHeader) {
         return res.status(400).send('bad request');
       }
       const keyFromAddress = webHookManager.getKeyFromAddress(address)
-      if(isValidSignatureForStringBody(xAlchemyHeader,keyFromAddress!)){
+      if (isValidSignatureForStringBody(xAlchemyHeader, keyFromAddress!)) {
         return res.status(400).send('bad request');
       }
       // sweet, we have a hook event from alchemy
@@ -43,110 +43,110 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
 
       // console.log(body.event.data.block.logs[0])
       const logs = body.event.data.block.logs
-      if(!logs || logs.length === 0){
+      if (!logs || logs.length === 0) {
         //@ts-ignore
         body.event = null;
         return res.status(200).send('ok');
       }
       // get hashes
-      const hashes = (logs.map((l)=>l.transaction.hash)).filter((v,i,a)=>a.indexOf(v)===i)
+      const hashes = (logs.map((l) => l.transaction.hash)).filter((v, i, a) => a.indexOf(v) === i)
       // if hash is being processed, ignore;
-      if(hashes.some((hash)=>currentlyProcessingHash.has(hash))){
+      if (hashes.some((hash) => currentlyProcessingHash.has(hash))) {
         console.log('hash already being processed')
         return res.status(200).send('ok');
       }
       // hashes aren't present, add them to list of hashes;
-      for(const hash of hashes){
-        currentlyProcessingHash.set(hash,true)
+      for (const hash of hashes) {
+        currentlyProcessingHash.set(hash, true)
       }
       // get corresponding ABI
       const isMechContract = address == contractAddresses[chain]["genesis-mechs"].toLowerCase()
 
-      console.log(`[${chain}] contract: `+ Object.entries(contractAddresses[chain]).find((t)=>t[1].toLowerCase() == address.toLowerCase())?.[0],', address:'+address)
+      console.log(`[${chain}] contract: ` + Object.entries(contractAddresses[chain]).find((t) => t[1].toLowerCase() == address.toLowerCase())?.[0], ', address:' + address)
 
-      const newOwnerShipDetails:OwnersData[] = []
-      const checkIfPresentInMap = (address:string,tokenId:number,owner:string,count:number) => {
-        let old = newOwnerShipDetails.find((t)=>t.address==address&&t.tokenId==tokenId&&t.owner==owner)
-        if(old){
-          console.warn('Duplicate entry for '+address+' '+tokenId+' '+owner+ '; new count:'+count+`; old count:`+ old.count)
+      const newOwnerShipDetails: OwnersData[] = []
+      const checkIfPresentInMap = (address: string, tokenId: number, owner: string, count: number) => {
+        let old = newOwnerShipDetails.find((t) => t.address == address && t.tokenId == tokenId && t.owner == owner)
+        if (old) {
+          console.warn('Duplicate entry for ' + address + ' ' + tokenId + ' ' + owner + '; new count:' + count + `; old count:` + old.count)
           return false
         }
         return true
       }
-      for (const log of logs){
+      for (const log of logs) {
         const fromAddress = log.transaction.from.address
         const toAddress = log.transaction.to.address
 
         // special stuff for the mech contract when minting / burning
-        const mintAddress = isMechContract?mintContractAddresses.mechs:constants.AddressZero
-        const burnAddress = isMechContract?mintContractAddresses.mechs:constants.AddressZero
+        const mintAddress = isMechContract ? mintContractAddresses.mechs : constants.AddressZero
+        const burnAddress = isMechContract ? mintContractAddresses.mechs : constants.AddressZero
 
-        if(fromAddress==mintAddress){
+        if (fromAddress == mintAddress) {
           // do something if minted?
-        }else if(burnAddress==toAddress){
+        } else if (burnAddress == toAddress) {
           // do something if burned?
         }
 
-        for (const innerLog of log.transaction.logs){
+        for (const innerLog of log.transaction.logs) {
           let object = {
-            data:innerLog.data||'',
-            topics:innerLog.topics,
+            data: innerLog.data || '',
+            topics: innerLog.topics,
           }
           const actualContractAddress = innerLog.account.address
-          const ABI = getABIbyAddressAndChainId(actualContractAddress,chain)
-          let contract = new Contract(actualContractAddress,ABI,provider)
-          let decoded:LogDescription = {} as any
-          try{
+          const ABI = getABIbyAddressAndChainId(actualContractAddress, chain)
+          let contract = new Contract(actualContractAddress, ABI, provider)
+          let decoded: LogDescription = {} as any
+          try {
             decoded = contract.interface.parseLog(object)
-          }catch{}
-          if(!decoded){
-            console.warn('Could not decode event'+JSON.stringify(object))
+          } catch { }
+          if (!decoded?.name) {
+            console.warn('Could not decode event' + JSON.stringify(object))
             continue;
           }
           const eventName = decoded.name
-          console.log('EventName: '+eventName)
+          console.log('EventName: ' + eventName)
 
-          const transferEvents = ['Transfer','TransferSingle','TransferBatch']
-          if(!transferEvents.includes(eventName)){
+          const transferEvents = ['Transfer', 'TransferSingle', 'TransferBatch']
+          if (!transferEvents.includes(eventName)) {
             continue;
           }
 
-          if(eventName == 'Transfer'){
+          if (eventName == 'Transfer') {
             // ERC721
-            const [from,to,token_id] = decoded.args as [string,string,BigNumber]
+            const [from, to, token_id] = decoded.args as [string, string, BigNumber]
             console.log(`Transfer from ${from} to ${to} tokenId ${token_id.toNumber()}`)
-            if(checkIfPresentInMap(actualContractAddress,token_id.toNumber(),to,1)){
-              newOwnerShipDetails.push({address:actualContractAddress,owner:to,tokenId:token_id.toNumber(),count:1})
+            if (checkIfPresentInMap(actualContractAddress, token_id.toNumber(), to, 1)) {
+              newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: token_id.toNumber(), count: 1 })
             }
-            if(checkIfPresentInMap(actualContractAddress,token_id.toNumber(),from,1)){
-              newOwnerShipDetails.push({address:actualContractAddress,owner:from,tokenId:token_id.toNumber(),count:0})
+            if (checkIfPresentInMap(actualContractAddress, token_id.toNumber(), from, 1)) {
+              newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: token_id.toNumber(), count: 0 })
             }
-          }else if (eventName == 'TransferSingle'){
+          } else if (eventName == 'TransferSingle') {
             // ERC1155
-            const [operator,from,to,token_id,value] = decoded.args as [string,string,string,BigNumber,BigNumber]
+            const [operator, from, to, token_id, value] = decoded.args as [string, string, string, BigNumber, BigNumber]
             console.log(`Transfer from ${from} to ${to} tokenId ${token_id.toNumber()}, count: ${value.toNumber()}`)
             // We could do the math here, but it's safer to just ask the blockchain what the final value is;
-            const toBalance = await getBalanceOfERC1155Contract(contract,to,token_id.toNumber())
-            if(toBalance!='error'&& checkIfPresentInMap(actualContractAddress,token_id.toNumber(),to,toBalance)){
-              newOwnerShipDetails.push({address:actualContractAddress,owner:to,tokenId:token_id.toNumber(),count:toBalance})
+            const toBalance = await getBalanceOfERC1155Contract(contract, to, token_id.toNumber())
+            if (toBalance != 'error' && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), to, toBalance)) {
+              newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: token_id.toNumber(), count: toBalance })
             }
-            const fromBalance = await getBalanceOfERC1155Contract(contract,from,token_id.toNumber())
-            if(fromBalance!='error' && checkIfPresentInMap(actualContractAddress,token_id.toNumber(),from,fromBalance)){
-              newOwnerShipDetails.push({address:actualContractAddress,owner:from,tokenId:token_id.toNumber(),count:fromBalance})
+            const fromBalance = await getBalanceOfERC1155Contract(contract, from, token_id.toNumber())
+            if (fromBalance != 'error' && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), from, fromBalance)) {
+              newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: token_id.toNumber(), count: fromBalance })
             }
 
-          }else if (eventName == 'TransferBatch'){
+          } else if (eventName == 'TransferBatch') {
             // ERC1155 transferBatch
-            const [operator,from,to,token_ids,values] = decoded.args as [string,string,string,BigNumber[],BigNumber[]]
-            for(let i = 0; i<token_ids.length;i++){
+            const [operator, from, to, token_ids, values] = decoded.args as [string, string, string, BigNumber[], BigNumber[]]
+            for (let i = 0; i < token_ids.length; i++) {
               const id = token_ids[i].toNumber()
-              const fromBalance = await getBalanceOfERC1155Contract(contract,from,id)
-              const toBalance = await getBalanceOfERC1155Contract(contract,to,id)
-              if(fromBalance!='error'){
-                newOwnerShipDetails.push({address:actualContractAddress,owner:from,tokenId:id,count:fromBalance})
+              const fromBalance = await getBalanceOfERC1155Contract(contract, from, id)
+              const toBalance = await getBalanceOfERC1155Contract(contract, to, id)
+              if (fromBalance != 'error') {
+                newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: id, count: fromBalance })
               }
-              if(toBalance!='error'){
-                newOwnerShipDetails.push({address:actualContractAddress,owner:to,tokenId:id,count:toBalance})
+              if (toBalance != 'error') {
+                newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: id, count: toBalance })
               }
             }
           }
@@ -155,9 +155,9 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
       }
       console.log('Saving to DB now...')
       // save to DB
-      await upsertAndComputeOwnersOfNFTs(chain=='goerli'?Network.ETH_GOERLI:Network.ETH_MAINNET,newOwnerShipDetails)
+      await upsertAndComputeOwnersOfNFTs(chain == 'goerli' ? Network.ETH_GOERLI : Network.ETH_MAINNET, newOwnerShipDetails)
 
-      for(const hash of hashes){
+      for (const hash of hashes) {
         currentlyProcessingHash.delete(hash)
       }
 
@@ -174,17 +174,17 @@ app.get('/', (req, res) => {
 });
 
 
-app.listen(env.SERVER_PORT,()=>{
-  console.log('Server listening on port '+ env.SERVER_PORT)
+app.listen(env.SERVER_PORT, () => {
+  console.log('Server listening on port ' + env.SERVER_PORT)
 })
 
 
-setTimeout(async ()=>{
+setTimeout(async () => {
   // Run job to sync ownership on startup
   await setCurrentOwnership(Network.ETH_MAINNET)
   await setCurrentOwnership(Network.ETH_GOERLI)
-},2000)
+}, 2000)
 
-setInterval(async ()=>{
-  console.log('memoryHeap: '+heapStats().heapSize/ 1024 / 1024 + 'mb')
-},10000)
+setInterval(async () => {
+  console.log('memoryHeap: ' + heapStats().heapSize / 1024 / 1024 + 'mb')
+}, 10000)
