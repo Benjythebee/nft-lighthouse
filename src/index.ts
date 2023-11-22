@@ -2,10 +2,10 @@ import server from "bunrest";
 const app = server();
 import env from './env'
 import { BigNumber, constants } from 'ethers'
-import { contractAddresses, mintContractAddresses } from "./libs/constants";
+import { contractAddresses } from "./libs/constants";
 import { isValidSignatureForStringBody, provider } from "./libs/alchemy";
 import { alchemyNotifyResponse } from "./types/alchemy";
-import { webHookManagerEth, webHookManagerGoerli } from './libs/webhookManager'
+import { webHookManagerEth, webHookManagerGoerli } from './managers'
 import { Contract } from "ethers";
 import { heapStats } from "bun:jsc";
 import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
@@ -74,19 +74,6 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
         return true
       }
       for (const log of logs) {
-        const fromAddress = log.transaction.from.address
-        const toAddress = log.transaction.to.address
-
-        // special stuff for the mech contract when minting / burning
-        const mintAddress = isMechContract ? mintContractAddresses.mechs : constants.AddressZero
-        const burnAddress = isMechContract ? mintContractAddresses.mechs : constants.AddressZero
-
-        if (fromAddress == mintAddress) {
-          // do something if minted?
-        } else if (burnAddress == toAddress) {
-          // do something if burned?
-        }
-
         for (const innerLog of log.transaction.logs) {
           let object = {
             data: innerLog.data || '',
@@ -114,40 +101,62 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
           if (eventName == 'Transfer') {
             // ERC721
             const [from, to, token_id] = decoded.args as [string, string, BigNumber]
+            const isMint = from == constants.AddressZero
+            const isBurned = to == constants.AddressZero
             console.log(`Transfer from ${from} to ${to} tokenId ${token_id.toNumber()}`)
-            if (checkIfPresentInMap(actualContractAddress, token_id.toNumber(), to, 1)) {
+            if (!isBurned && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), to, 1)) {
               newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: token_id.toNumber(), count: 1 })
             }
-            if (checkIfPresentInMap(actualContractAddress, token_id.toNumber(), from, 1)) {
+            // Dont save ownership of address Zero;
+            if (!isMint && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), from, 1)) {
               newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: token_id.toNumber(), count: 0 })
             }
           } else if (eventName == 'TransferSingle') {
             // ERC1155
             const [operator, from, to, token_id, value] = decoded.args as [string, string, string, BigNumber, BigNumber]
+            const isMint = from == constants.AddressZero
+            const isBurned = to == constants.AddressZero
+
             console.log(`Transfer from ${from} to ${to} tokenId ${token_id.toNumber()}, count: ${value.toNumber()}`)
             // We could do the math here, but it's safer to just ask the blockchain what the final value is;
-            const toBalance = await getBalanceOfERC1155Contract(contract, to, token_id.toNumber())
-            if (toBalance != 'error' && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), to, toBalance)) {
-              newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: token_id.toNumber(), count: toBalance })
+            if (!isBurned) {
+              const toBalance = await getBalanceOfERC1155Contract(contract, to, token_id.toNumber())
+              if (toBalance != 'error' && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), to, toBalance)) {
+                newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: token_id.toNumber(), count: toBalance })
+              }
             }
-            const fromBalance = await getBalanceOfERC1155Contract(contract, from, token_id.toNumber())
-            if (fromBalance != 'error' && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), from, fromBalance)) {
-              newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: token_id.toNumber(), count: fromBalance })
+
+            if (!isMint) {
+              // Dont save ownership of address Zero;
+              const fromBalance = await getBalanceOfERC1155Contract(contract, from, token_id.toNumber())
+              if (fromBalance != 'error' && checkIfPresentInMap(actualContractAddress, token_id.toNumber(), from, fromBalance)) {
+                newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: token_id.toNumber(), count: fromBalance })
+              }
             }
+
 
           } else if (eventName == 'TransferBatch') {
             // ERC1155 transferBatch
             const [operator, from, to, token_ids, values] = decoded.args as [string, string, string, BigNumber[], BigNumber[]]
+            const isMint = from == constants.AddressZero
+            const isBurned = to == constants.AddressZero
+
             for (let i = 0; i < token_ids.length; i++) {
               const id = token_ids[i].toNumber()
-              const fromBalance = await getBalanceOfERC1155Contract(contract, from, id)
-              const toBalance = await getBalanceOfERC1155Contract(contract, to, id)
-              if (fromBalance != 'error') {
-                newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: id, count: fromBalance })
+              if (!isMint) {
+                const fromBalance = await getBalanceOfERC1155Contract(contract, from, id)
+                if (fromBalance != 'error') {
+                  newOwnerShipDetails.push({ address: actualContractAddress, owner: from, tokenId: id, count: fromBalance })
+                }
               }
-              if (toBalance != 'error') {
-                newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: id, count: toBalance })
+
+              if (!isBurned) {
+                const toBalance = await getBalanceOfERC1155Contract(contract, to, id)
+                if (toBalance != 'error') {
+                  newOwnerShipDetails.push({ address: actualContractAddress, owner: to, tokenId: id, count: toBalance })
+                }
               }
+
             }
           }
           contract = null!
@@ -161,7 +170,7 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
         currentlyProcessingHash.delete(hash)
       }
 
-      res.status(200).send('ok');
+      return res.status(200).send('ok');
     });
   }
 }
