@@ -8,8 +8,7 @@ export default class WebHookManager {
   _host: string = env.SERVER_HOST
 
   constructor(public alchemy: Alchemy, private addressesToListenTo: string[] = [], public network: Network = Network.ETH_MAINNET, doNotInit?: boolean) {
-    console.log(doNotInit)
-    if (typeof doNotInit == 'undefined') {
+    if (typeof doNotInit == 'undefined' || doNotInit == false) {
       this._init()
     } else if (doNotInit) {
       console.log('Webhook manager is will not initialize')
