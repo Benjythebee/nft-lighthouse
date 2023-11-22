@@ -9,7 +9,7 @@ import { isValidSignatureForStringBody, provider } from "./libs/alchemy";
 import { alchemyNotifyResponse } from "./types/alchemy";
 import {webHookManagerEth,webHookManagerGoerli} from './libs/webhookManager'
 import { Contract } from "ethers";
-import { ABIS } from "@cyberbrokers/eth-utils";
+import { heapStats } from "bun:jsc";
 import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
 import { Network } from "alchemy-sdk";
 import { OwnersData, upsertAndComputeOwnersOfNFTs } from "./libs/pg/queries";
@@ -49,6 +49,8 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
       const logs = body.event.data.block.logs
 
       if(!logs || logs.length === 0){
+        //@ts-ignore
+        body.event = null;
         return res.status(200).send('ok');
       }
       // get hashes
@@ -188,10 +190,6 @@ setTimeout(async ()=>{
   await setCurrentOwnership(Network.ETH_GOERLI)
 },2000)
 
-nodeCleanup(function () {
-  // release resources here before node exits
-  webHookManagerEth.deleteAllWebhooks()
-  webHookManagerGoerli.deleteAllWebhooks()
-},{
-  ctrl_C: "{^C}",
-});
+setInterval(async ()=>{
+  console.log('memoryHeap: '+heapStats().heapSize/ 1024 / 1024 + 'mb')
+},5000)
