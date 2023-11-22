@@ -32,13 +32,11 @@ for(const [_chain,contractsByChain] of Object.entries(contractAddresses)){
       // verify it's a webhook request from alchemy
       const xAlchemyHeader = req.headers?req.headers['x-alchemy-signature']:undefined;
       if(!xAlchemyHeader){
-        res.status(400).send('bad request');
-        return;
+        return res.status(400).send('bad request');
       }
       const keyFromAddress = webHookManager.getKeyFromAddress(address)
-      if(isValidSignatureForStringBody(req.body as string,xAlchemyHeader,keyFromAddress!)){
-        res.status(400).send('bad request');
-        return;
+      if(isValidSignatureForStringBody(xAlchemyHeader,keyFromAddress!)){
+        return res.status(400).send('bad request');
       }
       // sweet, we have a hook event from alchemy
       const body = req.body as alchemyNotifyResponse;

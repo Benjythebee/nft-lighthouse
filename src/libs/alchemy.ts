@@ -25,7 +25,6 @@ export const provider = new providers.AlchemyProvider('homestead', env.ALCHEMY_K
 
 
 export function isValidSignatureForStringBody(
-    body: string, // must be raw string body, not json transformed version of the body
     signature: string, // your "x-alchemy-signature" from header
     signingKey: string, // taken from dashboard for specific webhook
   ): boolean {
