@@ -1,0 +1,24 @@
+{
+    "name": "Lighthouse Ownership API",
+    "version": "0.1.0",
+    "description": "A API documentation for the Lighthouse Ownership API",
+    "title": "Lighthouse Ownership API documentation",
+    "url" : "https://lighthouse.cbop.io",
+    "sampleUrl":"https://lighthouse.cbop.io",
+    "input": [
+      "docs/doc.js"
+    ],
+    "order": [
+      "API"
+    ],
+    "header": {
+      "title": "Introduction",
+      "filename": "docs/header.md"
+    },
+    "template": {
+      "showRequiredLabels": true,
+      "withCompare": false,
+      "withGenerator": true,
+      "aloneDisplay": false
+    }
+  }

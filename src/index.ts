@@ -17,7 +17,10 @@ import { LogDescription } from "ethers/lib/utils";
 import APIRouter from "./api";
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['*', 'x-paradigm-secret'],
+  allowedHeaders: ['*', 'x-paradigm-secret'],
+}));
 
 const currentlyProcessingHash = new Map()
 
@@ -184,7 +187,15 @@ app.get('/', (req, res) => {
   res.status(200).send('ok');
 });
 
+
 APIRouter(app)
+
+
+app._router.stack.forEach(function (r: any) {
+  if (r.route && r.route.path) {
+    console.log(r.route.path)
+  }
+})
 
 app.listen(env.SERVER_PORT, () => {
   console.log('Server listening on port ' + env.SERVER_PORT)
@@ -193,8 +204,8 @@ app.listen(env.SERVER_PORT, () => {
 
 setTimeout(async () => {
   // Run job to sync ownership on startup
-  await setCurrentOwnership(Network.ETH_MAINNET)
-  await setCurrentOwnership(Network.ETH_GOERLI)
+  // await setCurrentOwnership(Network.ETH_MAINNET)
+  // await setCurrentOwnership(Network.ETH_GOERLI)
 }, 2000)
 
 setInterval(async () => {

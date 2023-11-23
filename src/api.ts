@@ -3,12 +3,22 @@ import { utils } from 'ethers';
 import env from './env';
 import { pg } from './libs/pg/pg';
 import { Network } from 'alchemy-sdk';
+import path from 'path';
 import bytea from './helpers/bytea';
 
 export default function APIRouter(app: express.Application) {
     // add router
     const router = express.Router()
     app.use('/api', router)
+
+    router.get('/assets/*', (req, res) => {
+        res.status(200).sendFile(path.join(__dirname, '../public/docs/',req.path))
+    })
+
+    router.get('/', (req, res) => {
+        console.log(path.join(__dirname, '../public/docs/index.html'))
+        res.status(200).sendFile(path.join(__dirname, '../public/docs/index.html'))
+    })
 
     // headerMiddleware
     router.use((req, res, next) => {
@@ -17,8 +27,7 @@ export default function APIRouter(app: express.Application) {
         if (secret != env.API_PARADIGM_SECRET_HEADER) {
             return res.status(401).send('Unauthorized')
         }
-
-        next && next()
+        next()
     })
 
     router.get('/:wallet/nfts', async (req, res) => {
@@ -43,6 +52,7 @@ export default function APIRouter(app: express.Application) {
             query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') AND c.blockchain = $3::blockchain LIMIT 1000 OFFSET $2*1000`;
         }
         const inputs = [wallet.substring(2), page]
+        console.log(query)
         const nfts = await pg.query(query, chain ? [...inputs, chain] : inputs)
         if (!nfts || !nfts?.rows.length) {
             return res.status(200).json({ success: true, data: [], page })
