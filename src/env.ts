@@ -53,6 +53,12 @@ export const env = envsafe({
     allowEmpty: true,
     desc: 'The logtail key to use for logging',
   }),
+  API_PARADIGM_SECRET_HEADER: str({
+    devDefault: '',
+    default: '',
+    allowEmpty: true,
+    desc: 'The API header to use for the api router',
+  }),
 });
 
 export default env;

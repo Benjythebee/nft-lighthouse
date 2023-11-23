@@ -1,5 +1,6 @@
-import server from "bunrest";
-const app = server();
+// import server from "bunrest";
+import express from 'express';
+import cors from 'cors';
 import env from './env'
 import { BigNumber, constants } from 'ethers'
 import { contractAddresses } from "./libs/constants";
@@ -13,9 +14,10 @@ import { Network } from "alchemy-sdk";
 import { OwnersData, upsertAndComputeOwnersOfNFTs } from "./libs/pg/queries";
 import { getABIbyAddressAndChainId, getBalanceOfERC1155Contract } from "./helpers/eth";
 import { LogDescription } from "ethers/lib/utils";
-/**
- * Webhooks; It's important to create them BEFORE we use the json() middleware
- */
+import APIRouter from "./api";
+const app = express();
+app.use(express.json());
+app.use(cors());
 
 const currentlyProcessingHash = new Map()
 
@@ -30,7 +32,7 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
 
       const address = contractAddress.toLowerCase()
       // verify it's a webhook request from alchemy
-      const xAlchemyHeader = req.headers ? req.headers['x-alchemy-signature'] : undefined;
+      const xAlchemyHeader = req.headers ? req.headers['x-alchemy-signature'] as string : undefined;
       if (!xAlchemyHeader) {
         return res.status(400).send('bad request');
       }
@@ -182,6 +184,7 @@ app.get('/', (req, res) => {
   res.status(200).send('ok');
 });
 
+APIRouter(app)
 
 app.listen(env.SERVER_PORT, () => {
   console.log('Server listening on port ' + env.SERVER_PORT)
