@@ -44,13 +44,31 @@ export default function APIRouter(app: express.Application) {
             return res.status(400).json({ error: 'Invalid chain' })
         }
 
+        const _exclude = req.query?.exclude as string | string[]
+        const cleanExclude = []
+        if (_exclude && Array.isArray(_exclude)) {
+            for (const e of _exclude) {
+                if (utils.isAddress(e)) {
+                    cleanExclude.push(e)
+                }
+            }
+        }
+        if (_exclude && !cleanExclude.length) {
+            return res.status(400).json({ error: 'Invalid exclude params' })
+        }
+
         const page = req.query?.page || 0
 
         // Query NFTs for this NFT
-        let query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') LIMIT 1000 OFFSET $2*1000`;
-        if (chain) {
-            query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') AND c.blockchain = $3::blockchain LIMIT 1000 OFFSET $2*1000`;
+        let query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex')`;
+        if(cleanExclude.length) {
+            `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') and c.address not in (${cleanExclude.map((a)=>`'${a}'`).join(', ')}) `;
         }
+        if (chain) {
+            query += ` AND c.blockchain = $3::blockchain`;
+        }
+        // add limit
+        query += ` LIMIT 1000 OFFSET $2*1000`
         const inputs = [wallet.substring(2), page]
         console.log(query)
         const nfts = await pg.query(query, chain ? [...inputs, chain] : inputs)
@@ -99,13 +117,13 @@ export default function APIRouter(app: express.Application) {
         const ownerResponse = await pg.query(query)
 
         if (!ownerResponse || !ownerResponse?.rows.length) {
-            return res.status(200).send({ success: true, data: [] })
+            return res.status(200).json({ success: true, data: [] })
         }
         for (const result of ownerResponse.rows) {
             result.owner = bytea.byteaBufferToString(result.owner)
             result.contract_address = bytea.byteaBufferToString(result.contract_address)
         }
 
-        return res.status(200).send({ success: true, data: ownerResponse.rows as { owner: string, contract_address: string, blockchain: Network, token_id: number, contract_id: number }[] })
+        return res.status(200).json({ success: true, data: ownerResponse.rows as { owner: string, contract_address: string, blockchain: Network, token_id: number, contract_id: number }[] })
     })
 }
