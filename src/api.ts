@@ -45,11 +45,15 @@ export default function APIRouter(app: express.Application) {
         }
 
         const _exclude = req.query?.exclude as string | string[]
+        const _onlyAddresses = req.query?.onlyAddresses as string | string[]
+        if(_exclude && _onlyAddresses) {
+            return res.status(400).json({ error: 'Invalid params, cannot have exclude or onlyAddresses at the same time.' })
+        }
         const cleanExclude = []
         if (_exclude && Array.isArray(_exclude)) {
             for (const e of _exclude) {
                 if (utils.isAddress(e)) {
-                    cleanExclude.push(e)
+                    cleanExclude.push(e.substring(2))
                 }
             }
         }
@@ -57,12 +61,26 @@ export default function APIRouter(app: express.Application) {
             return res.status(400).json({ error: 'Invalid exclude params' })
         }
 
+        const cleanOnlyAddresses = []
+        if (_onlyAddresses && Array.isArray(_onlyAddresses)) {
+            for (const e of _onlyAddresses) {
+                if (utils.isAddress(e)) {
+                    cleanOnlyAddresses.push(e.substring(2))
+                }
+            }
+        }
+        if (_onlyAddresses && !cleanOnlyAddresses.length) {
+            return res.status(400).json({ error: 'Invalid onlyAddresses params' })
+        }
+
         const page = req.query?.page || 0
 
         // Query NFTs for this NFT
         let query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex')`;
         if(cleanExclude.length) {
-            `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') and c.address not in (${cleanExclude.map((a)=>`'${a}'`).join(', ')}) `;
+            `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') and encode(c.address,'hex') not in (${cleanExclude.map((a)=>`'${a}'`).join(', ')}) `;
+        }else if (cleanOnlyAddresses.length) {
+            `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') and encode(c.address,'hex') in (${cleanOnlyAddresses.map((a)=>`'${a}'`).join(', ')}) `;
         }
         if (chain) {
             query += ` AND c.blockchain = $3::blockchain`;
