@@ -45,12 +45,13 @@ export default function APIRouter(app: express.Application) {
         }
 
         const _exclude = req.query?.exclude as string | string[]
-        const _onlyAddresses = req.query?.onlyAddresses as string | string[]
-        if(_exclude && _onlyAddresses) {
+        const _only = req.query?.only as string | string[]
+        if(_exclude && _only) {
             return res.status(400).json({ error: 'Invalid params, cannot have exclude or onlyAddresses at the same time.' })
         }
         const cleanExclude = []
-        if (_exclude && Array.isArray(_exclude)) {
+        const exclude = _exclude && Array.isArray(_exclude) ? _exclude : [_exclude]
+        if (exclude) {
             for (const e of _exclude) {
                 if (utils.isAddress(e)) {
                     cleanExclude.push(e.substring(2))
@@ -62,15 +63,15 @@ export default function APIRouter(app: express.Application) {
         }
 
         const cleanOnlyAddresses = []
-        console.log(_onlyAddresses)
-        if (_onlyAddresses && Array.isArray(_onlyAddresses)) {
-            for (const e of _onlyAddresses) {
+        const only = _only && Array.isArray(_only) ? _only : [_only]
+        if (only) {
+            for (const e of _only) {
                 if (utils.isAddress(e)) {
                     cleanOnlyAddresses.push(e.substring(2))
                 }
             }
         }
-        if (_onlyAddresses && !cleanOnlyAddresses.length) {
+        if (_only && !cleanOnlyAddresses.length) {
             return res.status(400).json({ error: 'Invalid onlyAddresses params' })
         }
 
