@@ -50,7 +50,7 @@ export default function APIRouter(app: express.Application) {
             return res.status(400).json({ error: 'Invalid params, cannot have exclude or onlyAddresses at the same time.' })
         }
         const cleanExclude = []
-        const exclude = _exclude && Array.isArray(_exclude) ? _exclude : [_exclude]
+        const exclude = typeof _exclude != 'undefined' && Array.isArray(_exclude) ? _exclude : [_exclude]
         if (exclude) {
             for (const e of _exclude) {
                 if (utils.isAddress(e)) {
@@ -63,7 +63,7 @@ export default function APIRouter(app: express.Application) {
         }
 
         const cleanOnlyAddresses = []
-        const only = _only && Array.isArray(_only) ? _only : [_only]
+        const only = typeof _only != 'undefined' && Array.isArray(_only) ? _only : [_only]
         if (only) {
             for (const e of _only) {
                 if (utils.isAddress(e)) {
