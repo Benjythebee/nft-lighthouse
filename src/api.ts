@@ -62,6 +62,7 @@ export default function APIRouter(app: express.Application) {
         }
 
         const cleanOnlyAddresses = []
+        console.log(_onlyAddresses)
         if (_onlyAddresses && Array.isArray(_onlyAddresses)) {
             for (const e of _onlyAddresses) {
                 if (utils.isAddress(e)) {
