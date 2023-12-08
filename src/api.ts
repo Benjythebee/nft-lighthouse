@@ -50,29 +50,32 @@ export default function APIRouter(app: express.Application) {
             return res.status(400).json({ error: 'Invalid params, cannot have exclude or onlyAddresses at the same time.' })
         }
         const cleanExclude = []
-        const exclude = typeof _exclude != 'undefined' && Array.isArray(_exclude) ? _exclude : [_exclude]
-        if (exclude) {
-            for (const e of _exclude) {
-                if (utils.isAddress(e)) {
-                    cleanExclude.push(e.substring(2))
+        if(_exclude){
+            const exclude = Array.isArray(_exclude) ? _exclude : [_exclude]
+            if (exclude) {
+                for (const e of exclude) {
+                    if (utils.isAddress(e)) {
+                        cleanExclude.push(e.substring(2))
+                    }
                 }
             }
+            if (!cleanExclude.length) {
+                return res.status(400).json({ error: 'Invalid exclude params' })
+            }
         }
-        if (_exclude && !cleanExclude.length) {
-            return res.status(400).json({ error: 'Invalid exclude params' })
-        }
-
+        
         const cleanOnlyAddresses = []
-        const only = typeof _only != 'undefined' && Array.isArray(_only) ? _only : [_only]
-        if (only) {
-            for (const e of _only) {
+        if(_only){
+            const only = Array.isArray(_only) ? _only : [_only]
+            for (const e of only) {
                 if (utils.isAddress(e)) {
                     cleanOnlyAddresses.push(e.substring(2))
                 }
             }
-        }
-        if (_only && !cleanOnlyAddresses.length) {
-            return res.status(400).json({ error: 'Invalid onlyAddresses params' })
+
+            if (!cleanOnlyAddresses.length) {
+                return res.status(400).json({ error: 'Invalid onlyAddresses params' })
+            }
         }
 
         const page = req.query?.page || 0
