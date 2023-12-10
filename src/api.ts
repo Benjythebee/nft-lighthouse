@@ -79,7 +79,8 @@ export default function APIRouter(app: express.Application) {
         }
 
         const page = req.query?.page || 0
-
+        console.log('_only', _only)
+        console.log('cleanOnlyAddresses', cleanOnlyAddresses)
         // Query NFTs for this NFT
         let query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex')`;
         if(cleanExclude.length) {
