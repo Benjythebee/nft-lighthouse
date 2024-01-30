@@ -3,11 +3,11 @@ import getOwnershipOfAllNFTs from "../helpers/currentOwnership"
 import { OwnersData, upsertOwnersOfNFTs } from "../libs/pg/queries"
 import { ownerWithBalanceWithContract } from "../types/alchemy-api"
 import { Network } from "alchemy-sdk"
-
+import { createLogger } from "../libs/logger"
+const log = createLogger('nft-lighthouse','setCurrentOwnership')
 
 export const setCurrentOwnership = async (chain:Network) => {
     let {mechOwners,cyberBrokersOwners,afterglowOwners,revealedOwners,unrevealedOwners} = await getOwnershipOfAllNFTs(chain)
-
     // We have the owners, now we need to update the database
     const parsedResult = (result:ownerWithBalanceWithContract[])=>{
         let owners:OwnersData[] = []
@@ -23,12 +23,15 @@ export const setCurrentOwnership = async (chain:Network) => {
     // let's do it one at a time cause we don't want to overload the db;
     let owners = parsedResult([...mechOwners,...cyberBrokersOwners])
     await upsertOwnersOfNFTs(chain,owners)
+    log.info(`Updated ${mechOwners.length} mech owners and ${cyberBrokersOwners.length} CyberBrokers owners`)
     await sleep(500)
     owners=parsedResult([...afterglowOwners,...revealedOwners])
     await upsertOwnersOfNFTs(chain,owners)
+    log.info(`Updated ${afterglowOwners.length} afterglow owners and ${revealedOwners.length} revealed owners`)
     await sleep(500)
     owners=parsedResult([...unrevealedOwners])
     await upsertOwnersOfNFTs(chain,owners)
+    log.info(`Updated ${unrevealedOwners.length} unrevealed owners`)
     
 }
 

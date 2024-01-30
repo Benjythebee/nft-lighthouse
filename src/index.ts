@@ -9,7 +9,6 @@ import { alchemyNotifyResponse } from "./types/alchemy";
 import { webHookManagerEth, webHookManagerGoerli } from './managers'
 import { Contract } from "ethers";
 import { heapStats } from "bun:jsc";
-import { setCurrentOwnership } from "./jobs/setCurrentOwnership";
 import { Network } from "alchemy-sdk";
 import { OwnersData, upsertAndComputeOwnersOfNFTs } from "./libs/pg/queries";
 import { getABIbyAddressAndChainId, getBalanceOfERC1155Contract } from "./helpers/eth";
