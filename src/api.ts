@@ -160,7 +160,7 @@ export default function APIRouter(app: express.Application) {
         return res.status(200).json({ success: true, data: ownerResponse.rows as { owner: string, contract_address: string, blockchain: Network, token_id: number, contract_id: number }[] })
     })
 
-    router.get('/api/job/refreshOwnerShip',async(req,res)=>{
+    router.get('/job/refreshOwnerShip',async(req,res)=>{
         log.info('API request: Refreshing ownership')
         setCurrentOwnership(Network.ETH_MAINNET)
         return res.status(200).json({success:true})
