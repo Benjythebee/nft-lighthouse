@@ -166,4 +166,11 @@ export default function APIRouter(app: express.Application) {
         return res.status(200).json({success:true})
     })
 
+    
+    router.stack.forEach(function (r: any) {
+            if (r.route && r.route.path) {
+            console.log(r.route.path)
+            }
+        })
+
 }
