@@ -90,11 +90,13 @@ export const withMetadata = async (nfts: OwnerData[]): Promise<OwnerDataWithMeta
         }
         result.push(...newMetadataCacheRecords.map((record)=>({
           ...nfts.find((nft)=>nft.token_id == Number(record.token_id) && nft.contract_id == Number(record.contract_id))!,
+          metadata_cache_id:record.metadata_cache_id,
           metadata:record.metadata
         })))
       }else{
         result.push(...rows.map((record)=>({
           ...nfts.find((nft)=>nft.token_id == Number(record.token_id) && nft.contract_id == Number(record.contract_id))!,
+          metadata_cache_id:String(record.metadata_cache_id),
           metadata:record.metadata
         })))
       }
