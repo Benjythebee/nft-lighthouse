@@ -23,7 +23,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@cyberbrokers/eth-utils": "^0.0.10",
+    "@cyberbrokers/eth-utils": "latest",
     "@logtail/node": "^0.4.17",
     "@logtail/winston": "^0.4.17",
     "@types/localtunnel": "^2.0.4",

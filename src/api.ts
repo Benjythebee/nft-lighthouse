@@ -7,6 +7,8 @@ import path from 'path';
 import bytea from './helpers/bytea';
 import { setCurrentOwnership } from './jobs/setCurrentOwnership';
 import { createLogger } from './libs/logger';
+import { OwnerData, OwnerDataWithMetadata } from './types/api';
+import { withMetadata } from './helpers/withMetadata';
 const log = createLogger('nft-lighthouse','API')
 
 
@@ -53,6 +55,8 @@ export default function APIRouter(app: express.Application) {
         if (chain && !Object.values(Network).includes(chain)) {
             return res.status(400).json({ error: 'Invalid chain' })
         }
+
+        const withMetadataQuery = req.query?.withMetadata == 'true'
 
         const _exclude = req.query?.exclude as string | string[]
         const _only = req.query?.only as string | string[]
@@ -103,18 +107,22 @@ export default function APIRouter(app: express.Application) {
         // add limit
         query += ` LIMIT 1000 OFFSET $2*1000`
         const inputs = [wallet.substring(2), page]
-        console.log(query)
+
         const nfts = await pg.query(query, chain ? [...inputs, chain] : inputs)
         if (!nfts || !nfts?.rows.length) {
             return res.status(200).json({ success: true, data: [], page })
         }
-        const results = nfts.rows as { owner: string, contract_address: string, blockchain: Network, token_id: number, contract_id: number }[]
+
+        let results = nfts.rows as OwnerData[]
+        if(withMetadataQuery){
+            results = await withMetadata(results) as OwnerDataWithMetadata[]
+        }
 
         for (const result of results) {
             result.owner = bytea.byteaBufferToString(result.owner as unknown as Buffer)
             result.contract_address = bytea.byteaBufferToString(result.contract_address as unknown as Buffer)
         }
-
+        console.log(results)
         return res.status(200).json({ success: true, data: nfts.rows, page })
     })
 

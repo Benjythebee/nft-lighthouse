@@ -3,6 +3,12 @@ import express from 'express';
 import cors from 'cors';
 import env from './env'
 import { BigNumber, constants } from 'ethers'
+import { config as utilConfig } from '@cyberbrokers/eth-utils';
+utilConfig.setConfig({
+  alchemy:{
+    eth_key:env.ALCHEMY_KEY,
+  }
+})
 import { contractAddresses } from "./libs/constants";
 import { isValidSignatureForStringBody, provider } from "./libs/alchemy";
 import { alchemyNotifyResponse } from "./types/alchemy";
@@ -14,6 +20,7 @@ import { OwnersData, upsertAndComputeOwnersOfNFTs } from "./libs/pg/queries";
 import { getABIbyAddressAndChainId, getBalanceOfERC1155Contract } from "./helpers/eth";
 import { LogDescription } from "ethers/lib/utils";
 import APIRouter from "./api";
+
 const app = express();
 app.use(express.json());
 app.use(cors({
