@@ -4,7 +4,7 @@
   "type": "module",
   "engines": {
     "node": ">=18",
-    "bun": ">=0.0.1"
+    "bun": ">=1.0.26"
   },
   "scripts": {
     "start": "bun --watch run src/index.ts",
