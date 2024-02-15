@@ -124,8 +124,7 @@ export default function APIRouter(app: express.Application) {
             results = await withMetadata(results) as OwnerDataWithMetadata[]
         }
 
-        console.log(results)
-        return res.status(200).json({ success: true, data: nfts.rows, page })
+        return res.status(200).json({ success: true, data: results, page })
     })
 
     router.post('/ownerOf', async (req, res) => {
