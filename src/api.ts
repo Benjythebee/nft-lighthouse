@@ -115,6 +115,7 @@ export default function APIRouter(app: express.Application) {
 
         let results = nfts.rows as OwnerData[]
         if(withMetadataQuery){
+            console.log(results)
             results = await withMetadata(results) as OwnerDataWithMetadata[]
         }
 
