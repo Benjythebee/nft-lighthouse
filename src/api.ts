@@ -114,15 +114,16 @@ export default function APIRouter(app: express.Application) {
         }
 
         let results = nfts.rows as OwnerData[]
-        if(withMetadataQuery){
-            console.log(results)
-            results = await withMetadata(results) as OwnerDataWithMetadata[]
-        }
-
+        
         for (const result of results) {
             result.owner = bytea.byteaBufferToString(result.owner as unknown as Buffer)
             result.contract_address = bytea.byteaBufferToString(result.contract_address as unknown as Buffer)
         }
+
+        if(withMetadataQuery){
+            results = await withMetadata(results) as OwnerDataWithMetadata[]
+        }
+
         console.log(results)
         return res.status(200).json({ success: true, data: nfts.rows, page })
     })

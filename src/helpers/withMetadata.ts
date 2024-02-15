@@ -27,7 +27,6 @@ export const withMetadata = async (nfts: OwnerData[]): Promise<OwnerDataWithMeta
       
       // get contract id;
 
-      console.log(contractAddress)
       const nftsFromDB = await pg.query(`SELECT t.*
       FROM onchain_asset_metadata_cache t 
       JOIN contract c 
