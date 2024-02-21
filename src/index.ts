@@ -22,7 +22,8 @@ import { LogDescription } from "ethers/lib/utils";
 import APIRouter from "./api";
 
 const app = express();
-app.use(express.json());
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb'}));
 app.use(cors({
   exposedHeaders: ['*', 'x-paradigm-secret'],
   allowedHeaders: ['*', 'x-paradigm-secret'],
@@ -216,4 +217,4 @@ setTimeout(async () => {
 
 setInterval(async () => {
   console.log('memoryHeap: ' + heapStats().heapSize / 1024 / 1024 + 'mb')
-}, 10000)
+}, 30000)
