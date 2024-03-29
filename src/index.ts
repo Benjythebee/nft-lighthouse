@@ -12,7 +12,7 @@ utilConfig.setConfig({
 import { contractAddresses } from "./libs/constants";
 import { isValidSignatureForStringBody, provider } from "./libs/alchemy";
 import { alchemyNotifyResponse } from "./types/alchemy";
-import { webHookManagerEth, webHookManagerGoerli } from './managers'
+import { webHookManagerEth } from './managers'
 import { Contract } from "ethers";
 import { heapStats } from "bun:jsc";
 import { Network } from "alchemy-sdk";
@@ -32,12 +32,13 @@ app.use(cors({
 const currentlyProcessingHash = new Map()
 
 for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
-  const chain = _chain as 'eth' | 'goerli'
+  const chain = _chain as 'eth'
+
   const addresses = Object.values(contractsByChain)
   for (const contractAddress of addresses) {
     // create a route for each contracts;
     app.post(`/hook/${chain}/` + contractAddress.toLowerCase(), async (req, res) => {
-      const webHookManager = chain == 'eth' ? webHookManagerEth : webHookManagerGoerli
+      const webHookManager = webHookManagerEth
       await webHookManager.isReady()
 
       const address = contractAddress.toLowerCase()
@@ -176,7 +177,7 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
       }
       console.log('Saving to DB now...')
       // save to DB
-      await upsertAndComputeOwnersOfNFTs(chain == 'goerli' ? Network.ETH_GOERLI : Network.ETH_MAINNET, newOwnerShipDetails)
+      await upsertAndComputeOwnersOfNFTs(Network.ETH_MAINNET, newOwnerShipDetails)
 
       for (const hash of hashes) {
         currentlyProcessingHash.delete(hash)

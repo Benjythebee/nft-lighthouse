@@ -3,23 +3,16 @@ import env from "../env";
 
 import * as crypto from "crypto";
 import { providers } from "ethers";
-const settings:{eth:AlchemySettings,goerli:AlchemySettings} = {
+const settings:{eth:AlchemySettings} = {
   eth:{
     apiKey: env.ALCHEMY_KEY,
     authToken: env.ALCHEMY_AUTH_TOKEN,
     network: Network.ETH_MAINNET, 
   },
-  goerli:{
-    apiKey: env.ALCHEMY_KEY,
-    authToken: env.ALCHEMY_AUTH_TOKEN,
-    network: Network.ETH_GOERLI, 
-  }
-
 };
 
 const alchemyEth = new Alchemy(settings.eth);
-const alchemyGoerli = new Alchemy(settings.goerli);
-export default {alchemyEth,alchemyGoerli}
+export default {alchemyEth}
 
 export const provider = new providers.AlchemyProvider('homestead', env.ALCHEMY_KEY)
 
