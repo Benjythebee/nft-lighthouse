@@ -69,9 +69,7 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
         return res.status(200).send('ok');
       }
       // hashes aren't present, add them to list of hashes;
-      for (const hash of hashes) {
-        currentlyProcessingHash.set(hash, true)
-      }
+      hashes.forEach((hash)=>currentlyProcessingHash.set(hash, true))
       // get corresponding ABI
       const isMechContract = address == contractAddresses[chain]["genesis-mechs"].toLowerCase()
 
@@ -178,10 +176,9 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
       console.log('Saving to DB now...')
       // save to DB
       await upsertAndComputeOwnersOfNFTs(Network.ETH_MAINNET, newOwnerShipDetails)
-
-      for (const hash of hashes) {
-        currentlyProcessingHash.delete(hash)
-      }
+      //cleanup
+      newOwnerShipDetails.length = 0
+      hashes.forEach((hash)=>currentlyProcessingHash.delete(hash))
 
       return res.status(200).send('ok');
     });
@@ -189,7 +186,14 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
 }
 
 // app.use(bodyParser)
-
+app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (req.method == 'OPTIONS') {
+    // dont log options requests; too much spam
+    return next()
+  }
+  console.log(`[${req.method}] ${req.url}`)
+  next()
+})
 
 app.get('/', (req, res) => {
   res.status(200).send('ok');
