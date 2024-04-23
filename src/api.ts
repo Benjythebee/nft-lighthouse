@@ -95,11 +95,11 @@ export default function APIRouter(app: express.Application) {
         const page = req.query?.page || 0
 
         // Query NFTs for this NFT
-        let query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex')`;
+        let query = `SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.count>0 and t.owner = decode($1,'hex')`;
         if(cleanExclude.length) {
-            query=`SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') and encode(c.address,'hex') not in (${cleanExclude.map((a)=>`'${a.toLowerCase()}'`).join(', ')}) `;
+            query=`SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.count>0 and t.owner = decode($1,'hex') and encode(c.address,'hex') not in (${cleanExclude.map((a)=>`'${a.toLowerCase()}'`).join(', ')}) `;
         }else if (cleanOnlyAddresses.length) {
-            query=`SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.owner = decode($1,'hex') and encode(c.address,'hex') in (${cleanOnlyAddresses.map((a)=>`'${a.toLowerCase()}'`).join(', ')}) `;
+            query=`SELECT t.*,c.blockchain,c.address as contract_address FROM token_ownership t JOIN contract c ON t.contract_id = c.contract_id WHERE t.count>0 and t.owner = decode($1,'hex') and encode(c.address,'hex') in (${cleanOnlyAddresses.map((a)=>`'${a.toLowerCase()}'`).join(', ')}) `;
         }
         if (chain) {
             query += ` AND c.blockchain = $3::blockchain`;
