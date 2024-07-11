@@ -2,7 +2,7 @@ import { ABIS } from "@cyberbrokers/eth-utils";
 import { contractAddresses } from "../libs/constants";
 import { Contract } from "ethers";
 
-export const getABIbyAddressAndChainId = (address:string,chain:'eth'|'goerli') => {
+export const getABIbyAddressAndChainId = (address:string,chain:'eth'|'sepolia') => {
     
     let ABI = ABIS.mechAbi as any[];
     switch (address) {

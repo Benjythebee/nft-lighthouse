@@ -179,7 +179,7 @@ for (const [_chain, contractsByChain] of Object.entries(contractAddresses)) {
       //cleanup
       newOwnerShipDetails.length = 0
       hashes.forEach((hash)=>currentlyProcessingHash.delete(hash))
-
+      hashes.length =0
       return res.status(200).send('ok');
     });
   }
