@@ -8,6 +8,8 @@ To install dependencies:
 bun install
 ```
 
+make sure you have the appropriate env vars
+
 To run:
 
 ```bash
