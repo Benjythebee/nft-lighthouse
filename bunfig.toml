@@ -1,2 +1,0 @@
-[install.scopes]
-"@cyberbrokers" = { token = "$npm_token" }

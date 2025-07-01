@@ -1,4 +1,6 @@
-# nft-monitor
+# nft-lighthouse
+
+The BunJS server behind Cyberbroker's paradigm-found NFT ownership system. Runs a small server that listens for chain events and records ownership over time. It then provides an API to let other microservices get information about a wallet's owned NFTs
 
 To install dependencies:
 
